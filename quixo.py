@@ -104,11 +104,22 @@ class Quixo:
         lines.append([self.board[i][4-i] for i in range(5)])
 
         # Comprueba cada línea para ver si hay un ganador
-        for line in lines:
-            if all(cell == 'X' for cell in line):
-                return 'X'  # El jugador X ha ganado
-            if all(cell == 'O' for cell in line):
-                return 'O'  # El jugador O ha ganado
+        # En caso de formarse 5 en fila de los dos bandos en una jugada, gana el que hizo la jugada.
+        # por ello se revisa primero al current player.
+        if self.current_player == 'X':
+            for line in lines:
+                if all(cell == 'X' for cell in line):
+                    return 'X'  # El jugador X ha ganado
+            for line in lines:
+                if all(cell == 'O' for cell in line):
+                    return 'O'  # El jugador O ha ganado
+        else:
+            for line in lines:
+                if all(cell == 'O' for cell in line):
+                    return 'O'  # El jugador X ha ganado
+            for line in lines:
+                if all(cell == 'X' for cell in line):
+                    return 'X'  # El jugador O ha ganado
         return None  # No hay ganador aún
 
     def switch_player(self):
@@ -140,3 +151,13 @@ class Quixo:
 if __name__ == "__main__":
     game = Quixo()  # Crea una instancia del juego Quixo
     game.play()  # Inicia el juego
+
+
+"""
+Anotaciones:
+-Implementé movimientos con sus respectivas limitaciones. Solo se puede tomar de los bordes, y si intentas
+poner una pieza en el lugar que la tomaste, no puedes hacerlo.
+-Implementé sistema de ganador y perdedor, así como cambio de turno cambiando self.current_player.
+-Implementé tablero en el constructor self.board y sistema para jugar implementado en play.
+-Corregi empate. En caso de 2 5 en raya a la vez generados en una jugada, gana el jugador que hizo la jugada.
+"""
