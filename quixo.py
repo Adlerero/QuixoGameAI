@@ -26,7 +26,7 @@ class Quixo:
         #Devuelve True si es que el movmiento es una de las 4 esquinas del tablero
         return (row == 0 and col == 0) or (row == 0 and col == 4) or (row == 4 and col == 0) or (row == 4 and col == 4)
 
-    def make_move(self, row, col, movement):
+    def make_move(self, row, col, movement, player):
         # Verifica el lugar desde el que se toma la pieza es válido
         if not self.is_valid_move(row, col):
             print("Asegúrese de tomar una pieza que esté en los bordes.")
@@ -48,23 +48,23 @@ class Quixo:
                 return False
 
         #Movimiento válido
-        self.board[row][col] = self.current_player
+        self.board[row][col] = player
         if movement == "right":  # Desplazamiento a la derecha
             for i in range(col, 4):
                 self.board[row][i] = self.board[row][i + 1]  # Desplaza las piezas hacia la izquierda
-            self.board[row][4] = self.current_player  # Coloca la pieza en la nueva posición
+            self.board[row][4] = player  # Coloca la pieza en la nueva posición
         elif movement == "left":  # Desplazamiento a la izquierda
             for i in range(col, 0, -1):
                 self.board[row][i] = self.board[row][i - 1]  # Desplaza las piezas hacia la derecha
-            self.board[row][0] = self.current_player  # Coloca la pieza en la nueva posición
+            self.board[row][0] = player  # Coloca la pieza en la nueva posición
         elif movement == "down":  # Desplazamiento hacia abajo
             for i in range(row, 4):
                 self.board[i][col] = self.board[i + 1][col]  # Desplaza las piezas hacia arriba
-            self.board[4][col] = self.current_player  # Coloca la pieza en la nueva posición
+            self.board[4][col] = player  # Coloca la pieza en la nueva posición
         elif movement == "up":  # Desplazamiento hacia arriba
             for i in range(row, 0, -1):
                 self.board[i][col] = self.board[i - 1][col]  # Desplaza las piezas hacia abajo
-            self.board[0][col] = self.current_player  # Coloca la pieza en la nueva posición
+            self.board[0][col] = player  # Coloca la pieza en la nueva posición
         return True  # Movimiento realizado con éxito
 
     def check_winner(self):
@@ -130,7 +130,7 @@ class Quixo:
         if player == 'X':
             return X_score - O_score
         else:
-            return O_score - X_score
+            return -O_score + X_score
         
 
     def get_possible_moves(self):
@@ -187,7 +187,7 @@ class Quixo:
             best_value = -math.inf  # Inicializar el mejor puntaje como menos infinito
             # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
-                self.make_move(row, col, movement)
+                self.make_move(row, col, movement, 'X')
                 # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
                 value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
                 self.undo_move(row, col, movement)
@@ -200,8 +200,8 @@ class Quixo:
             best_value = math.inf  # Inicializar el mejor puntaje como infinito
             # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
-                self.make_move(row, col, movement)
-                value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
+                self.make_move(row, col, movement, 'O')
+                value = self.minimax_alpha_beta(depth-1, True, alpha, beta)
                 self.undo_move(row, col, movement)
                 best_value = min(value, best_value)  # Actualizar el mejor puntaje
                 beta = min(value, best_value)  # Actualizar beta
@@ -217,14 +217,19 @@ class Quixo:
         alpha = -math.inf
         beta = math.inf
 
+        if self.side == 'X':
+            is_maximizing = False
+        else:
+            is_maximizing = True
+
         for row, col, movement in self.get_possible_moves():
-            self.make_move(row, col, movement)
-            value = self.minimax_alpha_beta(2, False, alpha, beta)
+            self.make_move(row, col, movement, self.current_player)
+            value = self.minimax_alpha_beta(2, is_maximizing, alpha, beta)
             self.undo_move(row, col, movement)
 
             if value > best_value:
                 best_value = value
-                best_move = (row, col, movement)
+                best_move = (row, col, movement, self.current_player)
 
         return best_move
 
@@ -311,7 +316,7 @@ class Quixo:
                     movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
                     while movement not in ["left", "right", "up", "down"]:
                         movement = input("Ingrese un movimiento valido: ")
-                    if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                    if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
                         winner = self.check_winner()  # Verifica si hay un ganador
                         if winner:
                             self.print_board()
@@ -350,7 +355,7 @@ class Quixo:
                         movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
                         while movement not in ["left", "right", "up", "down"]:
                             movement = input("Ingrese un movimiento valido: ")
-                        if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                        if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
                             winner = self.check_winner()  # Verifica si hay un ganador
                             if winner:
                                 self.print_board()
@@ -363,13 +368,13 @@ class Quixo:
                         print("Turno de la computadora")
                         best_move = self.find_best_move()
                         if best_move:
-                            self.make_move(*best_move)
-                            print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
-                            winner = self.check_winner()
-                            if winner:
-                                self.print_board()
-                                print(f"¡El jugador {winner} gana!")
-                                break
+                            if self.make_move(*best_move):
+                                winner = self.check_winner()
+                                if winner:
+                                    self.print_board()
+                                    print(f"¡El jugador {winner} gana!")
+                                    break
+                                print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
                             self.switch_player()
                         else:
                             print("La computadora no puede realizar ningún movimiento. ¡El juego termina en empate!")
@@ -404,7 +409,7 @@ class Quixo:
                     movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
                     while movement not in ["left", "right", "up", "down"]:
                         movement = input("Ingrese un movimiento valido: ")
-                    if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                    if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
                         winner = self.check_winner()  # Verifica si hay un ganador
                         if winner:
                             self.print_board()
@@ -443,7 +448,7 @@ class Quixo:
                         movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
                         while movement not in ["left", "right", "up", "down"]:
                             movement = input("Ingrese un movimiento valido: ")
-                        if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                        if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
                             winner = self.check_winner()  # Verifica si hay un ganador
                             if winner:
                                 self.print_board()
@@ -456,13 +461,13 @@ class Quixo:
                         print("Turno de la computadora")
                         best_move = self.find_best_move()
                         if best_move:
-                            self.make_move(*best_move)
-                            print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
-                            winner = self.check_winner()
-                            if winner:
-                                self.print_board()
-                                print(f"¡El jugador {winner} gana!")
-                                break
+                            if self.make_move(*best_move):
+                                winner = self.check_winner()
+                                if winner:
+                                    self.print_board()
+                                    print(f"¡El jugador {winner} gana!")
+                                    break
+                                print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
                             self.switch_player()
                         else:
                             print("La computadora no puede realizar ningún movimiento. ¡El juego termina en empate!")
@@ -475,8 +480,7 @@ if __name__ == "__main__":
     game.play()
 
 
-#Menu para seleccionar con que ficha jugar y cual va primero
-#Negamax cambiado por minimax con profundidad 2, y implementacion de funcion heuristica
-#PARA QUE LA IA FUNCIONE, SE DEBE SELECCIONAR JUGAR CON O Y QUE O VAYA PRIMERO
-#Esto por que X es quien maximiza y O quien minimiza, y estoy pasando así los parametros en las funciones
-#Tengo que cambiar el que se pasen asi para que funcione de cualquier manera, en el siguiente commit queda
+#Permiti que se pueda jugar tanto con maximizador como minimizador, cambiando los false de is maximizing predeterminados
+#Corregi un error en minimax, que hacia que no se actualizara al maximizador o minimizador
+#Cambie la funcion makemove para que tambien tome jugador como parametro, y asi poder usar mejor el escoger fichas y cambio de jugador en minimax
+#Hay un problema posiblemente en undomove, ya que probablemente esta funcion es la que borra la ficha ya puesta en las jugadas de la computadora
