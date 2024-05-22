@@ -1,105 +1,82 @@
+import math
 #Adler Antonio Calvillo Arellano
 #Jared López García
 
 class Quixo:
     def __init__(self):
-        # Inicializa un tablero de 5x5 lleno de espacios vacíos y establece el jugador actual en 'X'
+         # Inicializa un tablero de 5x5 lleno de espacios vacíos y establece el jugador actual en 'X'
         self.board = [[' ' for _ in range(5)] for _ in range(5)]
         self.current_player = 'X'
+        self.side = 'X'
 
     def print_board(self):
-        # Imprime el tablero en su estado actual
+        # Imprime el estado actual del tablero
         for row in self.board:
-            print('  |  '.join(row))  # Imprime una fila del tablero con separadores '|'
-            print('---' * 9)  # Imprime una línea divisoria entre filas
+            print('  |  '.join(row))
+            print('---' * 9)
 
     def is_valid_move(self, row, col):
-        # Verifica si un movimiento es válido (la pieza debe estar en el borde y ser vacía o del jugador actual)
+        #Verifica que el movimiento sea válido (la pieza debe estar en el borde y ser vacía o del jugador actual)
         if row == 0 or row == 4 or col == 0 or col == 4:
             if self.board[row][col] == ' ' or self.board[row][col] == self.current_player:
-                return True  # Movimiento válido
-        return False  # Movimiento inválido
+                return True
+        return False
+
+    def is_corner(self, row, col):
+        #Devuelve True si es que el movmiento es una de las 4 esquinas del tablero
+        return (row == 0 and col == 0) or (row == 0 and col == 4) or (row == 4 and col == 0) or (row == 4 and col == 4)
 
     def make_move(self, row, col, movement):
         # Verifica el lugar desde el que se toma la pieza es válido
-        if self.is_valid_move(row, col):
-            #Movimientos no validos en aristas
-            if col != 0 or col != 4:
-                if row == 0 and movement == "up":
-                    print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                    return False
-                if row == 4 and movement == "down":
-                    print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                    return False
-            if row != 0 or row != 4:
-                if col == 0 and movement == "left":
-                    print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                    return False
-                if col == 4 and movement == "right":
-                    print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                    return False
-            #Movimientos no validos en esquinas 
-            if row == 0 and col == 0 and movement == "up":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
+        if not self.is_valid_move(row, col):
+            print("Asegúrese de tomar una pieza que esté en los bordes.")
+            return False    #Movimiento inválido
+
+        # Líneas agregadas: Verificar si la pieza está en una esquina y restringir movimientos
+        if self.is_corner(row, col):
+            if (row == 0 and col == 0 and movement not in ['right', 'down']) or \
+               (row == 0 and col == 4 and movement not in ['left', 'down']) or \
+               (row == 4 and col == 0 and movement not in ['right', 'up']) or \
+               (row == 4 and col == 4 and movement not in ['left', 'up']):
+                print("Movimiento inválido para una esquina.")
                 return False
-            if row == 0 and col == 0 and movement == "left":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                return False
-            if row == 0 and col == 4 and movement == "up":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                return False
-            if row == 0 and col == 4 and movement == "right":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                return False
-            if row == 4 and col == 0 and movement == "down":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                return False
-            if row == 4 and col == 0 and movement == "left":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                return False
-            if row == 4 and col == 4 and movement == "down":
-                print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
-                return False
-            if row == 4 and col == 4 and movement == "right":
+        else:
+            # Movimientos no válidos en bordes que no son esquinas            
+            if (row == 0 and movement == 'up') or (row == 4 and movement == 'down') or \
+               (col == 0 and movement == 'left') or (col == 4 and movement == 'right'):
                 print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
                 return False
 
-            #Movimiento valido
-            else:
-                # Establece la pieza en la nueva posición
-                self.board[row][col] = self.current_player
-            # Movimiento horizontal
-                if movement == "right":  # Desplazamiento a la derecha
-                    for i in range(col, 4):
-                        self.board[row][i] = self.board[row][i + 1]  # Desplaza las piezas hacia la izquierda
-                    self.board[row][4] = self.current_player  # Coloca la pieza en la nueva posición
-                if movement == "left":  # Desplazamiento a la izquierda
-                    for i in range(col, 0, -1):
-                        self.board[row][i] = self.board[row][i - 1]  # Desplaza las piezas hacia la derecha
-                    self.board[row][0] = self.current_player  # Coloca la pieza en la nueva posición
-            # Movimiento vertical
-                if movement == "down":  # Desplazamiento hacia abajo
-                    for i in range(row, 4):
-                        self.board[i][col] = self.board[i + 1][col]  # Desplaza las piezas hacia arriba
-                    self.board[4][col] = self.current_player  # Coloca la pieza en la nueva posición
-                if movement == "up":  # Desplazamiento hacia arriba
-                    for i in range(row, 0, -1):
-                        self.board[i][col] = self.board[i - 1][col]  # Desplaza las piezas hacia abajo
-                    self.board[0][col] = self.current_player  # Coloca la pieza en la nueva posición
-                return True  # Movimiento realizado con éxito
-        print("Asegúrese de tomar una pieza que esté en los bordes.")
-        return False  # Movimiento inválido
+        #Movimiento válido
+        self.board[row][col] = self.current_player
+        if movement == "right":  # Desplazamiento a la derecha
+            for i in range(col, 4):
+                self.board[row][i] = self.board[row][i + 1]  # Desplaza las piezas hacia la izquierda
+            self.board[row][4] = self.current_player  # Coloca la pieza en la nueva posición
+        elif movement == "left":  # Desplazamiento a la izquierda
+            for i in range(col, 0, -1):
+                self.board[row][i] = self.board[row][i - 1]  # Desplaza las piezas hacia la derecha
+            self.board[row][0] = self.current_player  # Coloca la pieza en la nueva posición
+        elif movement == "down":  # Desplazamiento hacia abajo
+            for i in range(row, 4):
+                self.board[i][col] = self.board[i + 1][col]  # Desplaza las piezas hacia arriba
+            self.board[4][col] = self.current_player  # Coloca la pieza en la nueva posición
+        elif movement == "up":  # Desplazamiento hacia arriba
+            for i in range(row, 0, -1):
+                self.board[i][col] = self.board[i - 1][col]  # Desplaza las piezas hacia abajo
+            self.board[0][col] = self.current_player  # Coloca la pieza en la nueva posición
+        return True  # Movimiento realizado con éxito
 
     def check_winner(self):
-        # Comprueba si hay un ganador
+        #Comprueba si hay ganador
         lines = []
-        # Añade todas las filas al conjunto de líneas a verificar
+        #Añade todas las filas al conjunto de líneas a verificar
         for row in self.board:
             lines.append(row)
-        # Añade todas las columnas al conjunto de líneas a verificar
+        #Añade todas las columnas al conjunto de filas a verificar
         for col in range(5):
             lines.append([self.board[row][col] for row in range(5)])
-        # Añade las diagonales al conjunto de líneas a verificar
+        #Añade las diagonales al conjunto de líneas a verificar
         lines.append([self.board[i][i] for i in range(5)])
         lines.append([self.board[i][4-i] for i in range(5)])
 
@@ -109,55 +86,397 @@ class Quixo:
         if self.current_player == 'X':
             for line in lines:
                 if all(cell == 'X' for cell in line):
-                    return 'X'  # El jugador X ha ganado
+                    return 'X' #Gana el jugador X
             for line in lines:
                 if all(cell == 'O' for cell in line):
-                    return 'O'  # El jugador O ha ganado
+                    return 'O' #Gana el jugador O
         else:
             for line in lines:
                 if all(cell == 'O' for cell in line):
-                    return 'O'  # El jugador X ha ganado
+                    return 'O'#El jugador x ha ganado
             for line in lines:
                 if all(cell == 'X' for cell in line):
-                    return 'X'  # El jugador O ha ganado
-        return None  # No hay ganador aún
+                    return 'X' #El jugador O ha ganado
+        return None #No hay ganador aún
 
     def switch_player(self):
-        # Cambia el turno al otro jugador
+        #Cambia al turno del otro jugador
         self.current_player = 'O' if self.current_player == 'X' else 'X'
 
-    def play(self):
-        # Controla el flujo del juego
-        while True:
-            self.print_board()  # Imprime el tablero actual
-            print(f"Turno del jugador {self.current_player}")
-            # Solicita al jugador que ingrese la fila y columna de la pieza a mover
-            row, col = map(int, input("Ingrese la fila y columna para recoger una pieza (0-4): ").split())
-            # Solicita al jugador que ingrese la nueva fila y columna para colocar la pieza
-            movement = input("Ingrese el movimiento a realizar('left', 'right', 'up' o 'down'): ")
-            while movement != "left" and movement != "right" and movement != "up" and movement != "down":
-                movement = input("Ingrese un movimiento valido: ")
-            if self.make_move(row, col, movement):  # Intenta realizar el movimiento
-                winner = self.check_winner()  # Verifica si hay un ganador
-                if winner:
-                    self.print_board()  # Imprime el tablero final
-                    print(f"¡El jugador {winner} gana!")  # Anuncia al ganador
-                    break  # Termina el juego
-                self.switch_player()  # Cambia de jugador
+    def evaluate_board(self, player):
+        def count_series(player, length):
+            count = 0
+            for row in self.board:
+                for i in range(6 - length):
+                    if all(cell == player for cell in row[i:i + length]):
+                        count += 1
+            for col in range(5):
+                for i in range(6 - length):
+                    if all(self.board[j][col] == player for j in range(i, i + length)):
+                        count += 1
+            for i in range(6 - length):
+                if all(self.board[i + j][i + j] == player for j in range(length)):
+                    count += 1
+                if all(self.board[i + j][4 - i - j] == player for j in range(length)):
+                    count += 1
+            return count
+
+        X_score = (1000 * count_series('X', 5) + 100 * count_series('X', 4) + 
+                10 * count_series('X', 3) + 1 * count_series('X', 2))
+        
+        O_score = (1000 * count_series('O', 5) + 100 * count_series('O', 4) + 
+                10 * count_series('O', 3) + 1 * count_series('O', 2))
+
+        if player == 'X':
+            return X_score - O_score
+        else:
+            return O_score - X_score
+        
+
+    def get_possible_moves(self):
+        moves = []
+        for row in range(5):
+            for col in range(5):
+                if self.is_valid_move(row, col):
+                    if row == 0:
+                        moves.append((row, col, 'down'))
+                        if col == 0 or col == 4:
+                            moves.append((row, col, 'right' if col == 0 else 'left'))
+                    elif row == 4:
+                        moves.append((row, col, 'up'))
+                        if col == 0 or col == 4:
+                            moves.append((row, col, 'right' if col == 0 else 'left'))
+                    if col == 0:
+                        moves.append((row, col, 'right'))
+                    elif col == 4:
+                        moves.append((row, col, 'left'))
+        return moves
+    
+    """
+    def negamax_alpha_beta(self, depth, alpha, beta, maximizing_player):
+        if depth == 0 or self.check_winner() is not None:
+            return self.evaluate_board()
+
+        best_value = float('-inf') if maximizing_player else float('inf')
+        for row, col, movement in self.get_possible_moves():
+            self.make_move(row, col, movement)
+            value = -self.negamax_alpha_beta(depth - 1, -beta, -alpha, not maximizing_player)
+            self.undo_move(row, col, movement)
+
+            if maximizing_player:
+                best_value = max(best_value, value)
+                alpha = max(alpha, value)
             else:
-                print("Movimiento inválido, inténtelo de nuevo.")
+                best_value = min(best_value, value)
+                beta = min(beta, value)
 
-# Código principal para iniciar el juego
+            if alpha >= beta:
+                break
+
+        return best_value
+
+    """
+
+        # Función que implementa el algoritmo Minimax con poda alfa-beta
+    def minimax_alpha_beta(self, depth, is_maximizing, alpha, beta):
+        # Comprobar si el juego ha terminado y devolver el valor de la posición
+        if depth == 0 or self.check_winner() is not None:
+            return self.evaluate_board('X')
+
+        if is_maximizing:  # Si es el turno del maximizador (jugador 'O')
+            best_value = -math.inf  # Inicializar el mejor puntaje como menos infinito
+            # Recorrer todas las celdas del tablero
+            for row, col, movement in self.get_possible_moves():
+                self.make_move(row, col, movement)
+                # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
+                value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
+                self.undo_move(row, col, movement)
+                best_value = max(value, best_value)  # Actualizar el mejor puntaje
+                alpha = max(alpha, best_value)  # Actualizar alfa
+                if beta <= alpha:  # Poda beta
+                    break  # Salir del bucle si ya no es necesario evaluar más movimientos
+            return best_value  # Devolver el mejor puntaje encontrado
+        else:  # Si es el turno del minimizador (jugador 'X')
+            best_value = math.inf  # Inicializar el mejor puntaje como infinito
+            # Recorrer todas las celdas del tablero
+            for row, col, movement in self.get_possible_moves():
+                self.make_move(row, col, movement)
+                value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
+                self.undo_move(row, col, movement)
+                best_value = min(value, best_value)  # Actualizar el mejor puntaje
+                beta = min(value, best_value)  # Actualizar beta
+                if beta <= alpha:  # Poda alfa
+                    break  # Salir del bucle si ya no es necesario evaluar más movimientos
+            return best_value  # Devolver el mejor puntaje encontrado
+
+
+
+    def find_best_move(self):
+        best_move = ()
+        best_value = -math.inf
+        alpha = -math.inf
+        beta = math.inf
+
+        for row, col, movement in self.get_possible_moves():
+            self.make_move(row, col, movement)
+            value = self.minimax_alpha_beta(2, False, alpha, beta)
+            self.undo_move(row, col, movement)
+
+            if value > best_value:
+                best_value = value
+                best_move = (row, col, movement)
+
+        return best_move
+
+    def undo_move(self, row, col, movement):
+        if movement == "right":
+            self.board[row][4] = ' '
+            for i in range(4, col, -1):
+                self.board[row][i] = self.board[row][i - 1]
+            self.board[row][col] = ' '
+        elif movement == "left":
+            self.board[row][0] = ' '
+            for i in range(0, col):
+                self.board[row][i] = self.board[row][i + 1]
+            self.board[row][col] = ' '
+        elif movement == "down":
+            self.board[4][col] = ' '
+            for i in range(4, row, -1):
+                self.board[i][col] = self.board[i - 1][col]
+            self.board[row][col] = ' '
+        elif movement == "up":
+            self.board[0][col] = ' '
+            for i in range(0, row):
+                self.board[i][col] = self.board[i + 1][col]
+            self.board[row][col] = ' '
+
+    def play(self):
+        print("Quixo IA")
+        print("Seleccione un modo de juego:")
+        print("1. Jugar contra otro jugador")
+        print("2. Jugar contra la computadora")
+        while True:
+            mode = input("Ingresa el número correspondiente al modo de juego: ")
+            
+            if not mode.isdigit():
+                continue
+            if mode >= '1' and mode <= '2':
+                break
+            
+        if mode == '2':
+            player = input("¿Con qué quieres jugar? Escoge 'O' o 'X'")
+            while player != 'O' and player != 'X':
+                player = input("Seleccione una ficha válida.")
+            self.side = player
+            
+
+        turn = input("¿Cuál jugador va primero? Escoge 'O' o 'X'")
+        while turn != 'O' and turn != 'X':
+            turn = input("¿Cuál jugador va primero? Escoge 'O' o 'X'")
+        
+        self.current_player = turn
+                
+
+        # Bucle que controla el flujo del juego
+        while True:
+            self.print_board()  # Imprime el estado actual del tablero
+            print(f"Turno del jugador {self.current_player}")
+            if self.current_player == 'X':
+                if mode == '1':  # Modo 1v1
+                    while True:
+                        entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
+                        partes = entrada.split()
+                        
+                        # Verificamos si se ingresaron exactamente dos partes
+                        if len(partes) != 2:
+                            print("Por favor, ingrese exactamente dos números separados por un espacio.")
+                            continue
+                        
+                        try:
+                            # Intentamos convertir las partes a enteros
+                            row, col = map(int, partes)
+                        except ValueError:
+                            print("Por favor, ingrese solo números enteros.")
+                            continue
+                        
+                        # Verificamos si los números están dentro del rango permitido
+                        if 0 <= row <= 4 and 0 <= col <= 4:
+                            break
+                        else:
+                            print("Por favor, ingrese números entre 0 y 4.")
+
+                    print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
+
+                    # Solicita al jugador la nueva fila y columna para colocar su pieza
+                    movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                    while movement not in ["left", "right", "up", "down"]:
+                        movement = input("Ingrese un movimiento valido: ")
+                    if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                        winner = self.check_winner()  # Verifica si hay un ganador
+                        if winner:
+                            self.print_board()
+                            print(f"¡El jugador {winner} gana!")
+                            break
+                        self.switch_player()  # Cambia al siguiente jugador
+                    else:
+                        print("Movimiento inválido, inténtelo de nuevo.")
+                else:  # Modo 1vCPU
+                    if self.side == 'X':
+                        while True:
+                            entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
+                            partes = entrada.split()
+                            
+                            # Verificamos si se ingresaron exactamente dos partes
+                            if len(partes) != 2:
+                                print("Por favor, ingrese exactamente dos números separados por un espacio.")
+                                continue
+                            
+                            try:
+                                # Intentamos convertir las partes a enteros
+                                row, col = map(int, partes)
+                            except ValueError:
+                                print("Por favor, ingrese solo números enteros.")
+                                continue
+                            
+                            # Verificamos si los números están dentro del rango permitido
+                            if 0 <= row <= 4 and 0 <= col <= 4:
+                                break
+                            else:
+                                print("Por favor, ingrese números entre 0 y 4.")
+
+                        print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
+
+                        # Solicita al jugador la nueva fila y columna para colocar su pieza
+                        movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                        while movement not in ["left", "right", "up", "down"]:
+                            movement = input("Ingrese un movimiento valido: ")
+                        if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                            winner = self.check_winner()  # Verifica si hay un ganador
+                            if winner:
+                                self.print_board()
+                                print(f"¡El jugador {winner} gana!")
+                                break
+                            self.switch_player()  # Cambia al siguiente jugador
+                        else:
+                            print("Movimiento inválido, inténtelo de nuevo.")
+                    else:
+                        print("Turno de la computadora")
+                        best_move = self.find_best_move()
+                        if best_move:
+                            self.make_move(*best_move)
+                            print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
+                            winner = self.check_winner()
+                            if winner:
+                                self.print_board()
+                                print(f"¡El jugador {winner} gana!")
+                                break
+                            self.switch_player()
+                        else:
+                            print("La computadora no puede realizar ningún movimiento. ¡El juego termina en empate!")
+                            break
+            else:
+                if mode == '1':  # Modo 1v1
+                    while True:
+                        entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
+                        partes = entrada.split()
+                        
+                        # Verificamos si se ingresaron exactamente dos partes
+                        if len(partes) != 2:
+                            print("Por favor, ingrese exactamente dos números separados por un espacio.")
+                            continue
+                        
+                        try:
+                            # Intentamos convertir las partes a enteros
+                            row, col = map(int, partes)
+                        except ValueError:
+                            print("Por favor, ingrese solo números enteros.")
+                            continue
+                        
+                        # Verificamos si los números están dentro del rango permitido
+                        if 0 <= row <= 4 and 0 <= col <= 4:
+                            break
+                        else:
+                            print("Por favor, ingrese números entre 0 y 4.")
+
+                    print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
+
+                    # Solicita al jugador la nueva fila y columna para colocar su pieza
+                    movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                    while movement not in ["left", "right", "up", "down"]:
+                        movement = input("Ingrese un movimiento valido: ")
+                    if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                        winner = self.check_winner()  # Verifica si hay un ganador
+                        if winner:
+                            self.print_board()
+                            print(f"¡El jugador {winner} gana!")
+                            break
+                        self.switch_player()  # Cambia al siguiente jugador
+                    else:
+                        print("Movimiento inválido, inténtelo de nuevo.")
+                else:
+                    if self.side == 'O':
+                        while True:
+                            entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
+                            partes = entrada.split()
+                            
+                            # Verificamos si se ingresaron exactamente dos partes
+                            if len(partes) != 2:
+                                print("Por favor, ingrese exactamente dos números separados por un espacio.")
+                                continue
+                            
+                            try:
+                                # Intentamos convertir las partes a enteros
+                                row, col = map(int, partes)
+                            except ValueError:
+                                print("Por favor, ingrese solo números enteros.")
+                                continue
+                            
+                            # Verificamos si los números están dentro del rango permitido
+                            if 0 <= row <= 4 and 0 <= col <= 4:
+                                break
+                            else:
+                                print("Por favor, ingrese números entre 0 y 4.")
+
+                        print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
+
+                        # Solicita al jugador la nueva fila y columna para colocar su pieza
+                        movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                        while movement not in ["left", "right", "up", "down"]:
+                            movement = input("Ingrese un movimiento valido: ")
+                        if self.make_move(row, col, movement):  # Intenta realizar el movimiento
+                            winner = self.check_winner()  # Verifica si hay un ganador
+                            if winner:
+                                self.print_board()
+                                print(f"¡El jugador {winner} gana!")
+                                break
+                            self.switch_player()  # Cambia al siguiente jugador
+                        else:
+                            print("Movimiento inválido, inténtelo de nuevo.")
+                    else:
+                        print("Turno de la computadora")
+                        best_move = self.find_best_move()
+                        if best_move:
+                            self.make_move(*best_move)
+                            print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
+                            winner = self.check_winner()
+                            if winner:
+                                self.print_board()
+                                print(f"¡El jugador {winner} gana!")
+                                break
+                            self.switch_player()
+                        else:
+                            print("La computadora no puede realizar ningún movimiento. ¡El juego termina en empate!")
+                            break
+
+
+# Inicia el juego
 if __name__ == "__main__":
-    game = Quixo()  # Crea una instancia del juego Quixo
-    game.play()  # Inicia el juego
+    game = Quixo() 
+    game.play()
 
 
-"""
-Anotaciones:
--Implementé movimientos con sus respectivas limitaciones. Solo se puede tomar de los bordes, y si intentas
-poner una pieza en el lugar que la tomaste, no puedes hacerlo.
--Implementé sistema de ganador y perdedor, así como cambio de turno cambiando self.current_player.
--Implementé tablero en el constructor self.board y sistema para jugar implementado en play.
--Corregi empate. En caso de 2 5 en raya a la vez generados en una jugada, gana el jugador que hizo la jugada.
-"""
+#Menu para seleccionar con que ficha jugar y cual va primero
+#Negamax cambiado por minimax con profundidad 2, y implementacion de funcion heuristica
+#PARA QUE LA IA FUNCIONE, SE DEBE SELECCIONAR JUGAR CON O Y QUE O VAYA PRIMERO
+#Esto por que X es quien maximiza y O quien minimiza, y estoy pasando así los parametros en las funciones
+#Tengo que cambiar el que se pasen asi para que funcione de cualquier manera, en el siguiente commit queda
