@@ -187,26 +187,28 @@ class Quixo:
             best_value = -math.inf  # Inicializar el mejor puntaje como menos infinito
             # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
-                self.make_move(row, col, movement, 'X')
+                board_state = self.board[row][col]
+                if self.make_move(row, col, movement, 'X'):
                 # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
-                value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
-                self.undo_move(row, col, movement)
-                best_value = max(value, best_value)  # Actualizar el mejor puntaje
-                alpha = max(alpha, best_value)  # Actualizar alfa
-                if beta <= alpha:  # Poda beta
-                    break  # Salir del bucle si ya no es necesario evaluar más movimientos
+                    value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
+                    self.undo_move(row, col, movement, board_state)
+                    best_value = max(value, best_value)  # Actualizar el mejor puntaje
+                    alpha = max(alpha, best_value)  # Actualizar alfa
+                    if beta <= alpha:  # Poda beta
+                        break  # Salir del bucle si ya no es necesario evaluar más movimientos
             return best_value  # Devolver el mejor puntaje encontrado
         else:  # Si es el turno del minimizador (jugador 'X')
             best_value = math.inf  # Inicializar el mejor puntaje como infinito
             # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
-                self.make_move(row, col, movement, 'O')
-                value = self.minimax_alpha_beta(depth-1, True, alpha, beta)
-                self.undo_move(row, col, movement)
-                best_value = min(value, best_value)  # Actualizar el mejor puntaje
-                beta = min(value, best_value)  # Actualizar beta
-                if beta <= alpha:  # Poda alfa
-                    break  # Salir del bucle si ya no es necesario evaluar más movimientos
+                board_state = self.board[row][col]
+                if self.make_move(row, col, movement, 'O'):
+                    value = self.minimax_alpha_beta(depth-1, True, alpha, beta)
+                    self.undo_move(row, col, movement, board_state)
+                    best_value = min(value, best_value)  # Actualizar el mejor puntaje
+                    beta = min(value, best_value)  # Actualizar beta
+                    if beta <= alpha:  # Poda alfa
+                        break  # Salir del bucle si ya no es necesario evaluar más movimientos
             return best_value  # Devolver el mejor puntaje encontrado
 
 
@@ -223,37 +225,39 @@ class Quixo:
             is_maximizing = True
 
         for row, col, movement in self.get_possible_moves():
-            self.make_move(row, col, movement, self.current_player)
-            value = self.minimax_alpha_beta(2, is_maximizing, alpha, beta)
-            self.undo_move(row, col, movement)
+            board_state = self.board[row][col]
+            if self.make_move(row, col, movement, self.current_player):
+                value = self.minimax_alpha_beta(2, is_maximizing, alpha, beta)
+                self.undo_move(row, col, movement, board_state)
 
-            if value > best_value:
-                best_value = value
-                best_move = (row, col, movement, self.current_player)
+                if value > best_value:
+                    best_value = value
+                    best_move = (row, col, movement, self.current_player)
 
         return best_move
 
-    def undo_move(self, row, col, movement):
+    def undo_move(self, row, col, movement, board_state):
         if movement == "right":
-            self.board[row][4] = ' '
+            self.board[row][4] = board_state
             for i in range(4, col, -1):
                 self.board[row][i] = self.board[row][i - 1]
-            self.board[row][col] = ' '
+            self.board[row][col] = board_state
         elif movement == "left":
-            self.board[row][0] = ' '
+            self.board[row][0] = board_state
             for i in range(0, col):
                 self.board[row][i] = self.board[row][i + 1]
-            self.board[row][col] = ' '
+            self.board[row][col] = board_state
         elif movement == "down":
-            self.board[4][col] = ' '
+            self.board[4][col] = board_state
             for i in range(4, row, -1):
                 self.board[i][col] = self.board[i - 1][col]
-            self.board[row][col] = ' '
+            self.board[row][col] = board_state
         elif movement == "up":
-            self.board[0][col] = ' '
+            self.board[0][col] = board_state
             for i in range(0, row):
                 self.board[i][col] = self.board[i + 1][col]
-            self.board[row][col] = ' '
+            self.board[row][col] = board_state
+
 
     def play(self):
         print("Quixo IA")
@@ -368,7 +372,8 @@ class Quixo:
                         print("Turno de la computadora")
                         best_move = self.find_best_move()
                         if best_move:
-                            if self.make_move(*best_move):
+                            row, col, movement, player = best_move
+                            if self.make_move(row, col, movement, player):
                                 winner = self.check_winner()
                                 if winner:
                                     self.print_board()
@@ -461,7 +466,8 @@ class Quixo:
                         print("Turno de la computadora")
                         best_move = self.find_best_move()
                         if best_move:
-                            if self.make_move(*best_move):
+                            row, col, movement, player = best_move
+                            if self.make_move(row, col, movement, player):
                                 winner = self.check_winner()
                                 if winner:
                                     self.print_board()
@@ -483,4 +489,4 @@ if __name__ == "__main__":
 #Permiti que se pueda jugar tanto con maximizador como minimizador, cambiando los false de is maximizing predeterminados
 #Corregi un error en minimax, que hacia que no se actualizara al maximizador o minimizador
 #Cambie la funcion makemove para que tambien tome jugador como parametro, y asi poder usar mejor el escoger fichas y cambio de jugador en minimax
-#Hay un problema posiblemente en undomove, ya que probablemente esta funcion es la que borra la ficha ya puesta en las jugadas de la computadora
+#Problema con undomove corregido, jugar contra la ia ya funciona
