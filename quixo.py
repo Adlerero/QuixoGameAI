@@ -1,4 +1,7 @@
 import math
+import os
+import sys
+
 #Adler Antonio Calvillo Arellano
 #Jared López García
 
@@ -6,8 +9,8 @@ class Quixo:
     def __init__(self):
          # Inicializa un tablero de 5x5 lleno de espacios vacíos y establece el jugador actual en 'X'
         self.board = [[' ' for _ in range(5)] for _ in range(5)]
-        self.current_player = 'X'
-        self.side = 'X'
+        self.current_player = 'x'
+        self.side = 'x'
 
     def print_board(self):
         # Imprime el estado actual del tablero
@@ -83,25 +86,25 @@ class Quixo:
         # Comprueba cada línea para ver si hay un ganador
         # En caso de formarse 5 en fila de los dos bandos en una jugada, gana el que hizo la jugada.
         # por ello se revisa primero al current player.
-        if self.current_player == 'X':
+        if self.current_player == 'x':
             for line in lines:
-                if all(cell == 'X' for cell in line):
+                if all(cell == 'x' for cell in line):
                     return 'X' #Gana el jugador X
             for line in lines:
-                if all(cell == 'O' for cell in line):
+                if all(cell == 'o' for cell in line):
                     return 'O' #Gana el jugador O
         else:
             for line in lines:
-                if all(cell == 'O' for cell in line):
+                if all(cell == 'o' for cell in line):
                     return 'O'#El jugador x ha ganado
             for line in lines:
-                if all(cell == 'X' for cell in line):
+                if all(cell == 'x' for cell in line):
                     return 'X' #El jugador O ha ganado
         return None #No hay ganador aún
 
     def switch_player(self):
         #Cambia al turno del otro jugador
-        self.current_player = 'O' if self.current_player == 'X' else 'X'
+        self.current_player = 'o' if self.current_player == 'x' else 'x'
 
     def evaluate_board(self, player):
         def count_series(player, length):
@@ -121,13 +124,13 @@ class Quixo:
                     count += 1
             return count
 
-        X_score = (1000 * count_series('X', 5) + 100 * count_series('X', 4) + 
-                10 * count_series('X', 3) + 1 * count_series('X', 2))
+        X_score = (1000 * count_series('x', 5) + 100 * count_series('x', 4) + 
+                10 * count_series('x', 3) + 1 * count_series('x', 2))
         
-        O_score = (1000 * count_series('O', 5) + 100 * count_series('O', 4) + 
-                10 * count_series('O', 3) + 1 * count_series('O', 2))
+        O_score = (1000 * count_series('o', 5) + 100 * count_series('o', 4) + 
+                10 * count_series('o', 3) + 1 * count_series('o', 2))
 
-        if player == 'X':
+        if player == 'x':
             return X_score - O_score
         else:
             return -O_score + X_score
@@ -152,43 +155,19 @@ class Quixo:
                         moves.append((row, col, 'left'))
         return moves
     
-    """
-    def negamax_alpha_beta(self, depth, alpha, beta, maximizing_player):
-        if depth == 0 or self.check_winner() is not None:
-            return self.evaluate_board()
-
-        best_value = float('-inf') if maximizing_player else float('inf')
-        for row, col, movement in self.get_possible_moves():
-            self.make_move(row, col, movement)
-            value = -self.negamax_alpha_beta(depth - 1, -beta, -alpha, not maximizing_player)
-            self.undo_move(row, col, movement)
-
-            if maximizing_player:
-                best_value = max(best_value, value)
-                alpha = max(alpha, value)
-            else:
-                best_value = min(best_value, value)
-                beta = min(beta, value)
-
-            if alpha >= beta:
-                break
-
-        return best_value
-
-    """
 
         # Función que implementa el algoritmo Minimax con poda alfa-beta
     def minimax_alpha_beta(self, depth, is_maximizing, alpha, beta):
         # Comprobar si el juego ha terminado y devolver el valor de la posición
         if depth == 0 or self.check_winner() is not None:
-            return self.evaluate_board('X')
+            return self.evaluate_board('x')
 
         if is_maximizing:  # Si es el turno del maximizador (jugador 'O')
             best_value = -math.inf  # Inicializar el mejor puntaje como menos infinito
             # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
                 board_state = self.board[row][col]
-                if self.make_move(row, col, movement, 'X'):
+                if self.make_move(row, col, movement, 'x'):
                 # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
                     value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
                     self.undo_move(row, col, movement, board_state)
@@ -202,7 +181,7 @@ class Quixo:
             # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
                 board_state = self.board[row][col]
-                if self.make_move(row, col, movement, 'O'):
+                if self.make_move(row, col, movement, 'o'):
                     value = self.minimax_alpha_beta(depth-1, True, alpha, beta)
                     self.undo_move(row, col, movement, board_state)
                     best_value = min(value, best_value)  # Actualizar el mejor puntaje
@@ -219,7 +198,7 @@ class Quixo:
         alpha = -math.inf
         beta = math.inf
 
-        if self.side == 'X':
+        if self.side == 'x':
             is_maximizing = False
         else:
             is_maximizing = True
@@ -235,6 +214,17 @@ class Quixo:
                     best_move = (row, col, movement, self.current_player)
 
         return best_move
+    
+    def find_blocking_move(self, opponent):
+        for row, col, movement in self.get_possible_moves():
+            board_state = [row[:] for row in self.board]
+            if self.make_move(row, col, movement, opponent):
+                if self.check_winner() == opponent.upper():
+                    self.board = board_state
+                    return (row, col, movement, self.current_player)
+                self.board = board_state
+        return None
+
 
     def undo_move(self, row, col, movement, board_state):
         if movement == "right":
@@ -260,12 +250,15 @@ class Quixo:
 
 
     def play(self):
-        print("Quixo IA")
-        print("Seleccione un modo de juego:")
-        print("1. Jugar contra otro jugador")
-        print("2. Jugar contra la computadora")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("\t\t\033[1;34mQuixo IA\033[0m\n")
+        print("\033[1m Seleccione un modo de juego: \033[0m")
+        print("\033[1;32m 1. Jugar contra otro jugador \033[0m")
+        print("\033[1;32m 2. Jugar contra la computadora \033[0m")
+        count = 1
+        draw = 101
         while True:
-            mode = input("Ingresa el número correspondiente al modo de juego: ")
+            mode = input("\n\033[1m Ingresa el número correspondiente al modo de juego: \033[0m")
             
             if not mode.isdigit():
                 continue
@@ -273,26 +266,35 @@ class Quixo:
                 break
             
         if mode == '2':
-            player = input("¿Con qué quieres jugar? Escoge 'O' o 'X'")
-            while player != 'O' and player != 'X':
-                player = input("Seleccione una ficha válida.")
+            player = input("¿Con qué quieres jugar? Escoge 'O' o 'X'\n").lower()
+            while player != 'o' and player != 'x':
+                player = input("Seleccione una ficha válida.").lower()
             self.side = player
             
 
-        turn = input("¿Cuál jugador va primero? Escoge 'O' o 'X'")
-        while turn != 'O' and turn != 'X':
-            turn = input("¿Cuál jugador va primero? Escoge 'O' o 'X'")
+        turn = input("¿Cuál jugador va primero? Escoge 'O' o 'X'\n").lower()
+        while turn != 'o' and turn != 'x':
+            turn = input("¿Cuál jugador va primero? Escoge 'O' o 'X'\n").lower()
         
         self.current_player = turn
                 
 
         # Bucle que controla el flujo del juego
         while True:
+            if count == draw:
+                print("Límite de turnos alcanzado.\nEmpate")
+                break
+            
             self.print_board()  # Imprime el estado actual del tablero
+            if count != 0:
+                print(f"Turno {count}")
+                
             print(f"Turno del jugador {self.current_player}")
-            if self.current_player == 'X':
+            
+            if self.current_player == 'x':
                 if mode == '1':  # Modo 1v1
                     while True:
+
                         entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
                         partes = entrada.split()
                         
@@ -329,8 +331,17 @@ class Quixo:
                         self.switch_player()  # Cambia al siguiente jugador
                     else:
                         print("Movimiento inválido, inténtelo de nuevo.")
+                        
                 else:  # Modo 1vCPU
-                    if self.side == 'X':
+                    if count == draw:
+                            print("Límite de turnos alcanzado.\nEmpate")
+                            break
+                        
+                    if self.side == 'x':
+                        if count == draw:
+                            print("Límite de turnos alcanzado.\nEmpate")
+                            break
+                        
                         while True:
                             entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
                             partes = entrada.split()
@@ -356,7 +367,7 @@ class Quixo:
                         print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
 
                         # Solicita al jugador la nueva fila y columna para colocar su pieza
-                        movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                        movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ").lower()
                         while movement not in ["left", "right", "up", "down"]:
                             movement = input("Ingrese un movimiento valido: ")
                         if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
@@ -370,6 +381,8 @@ class Quixo:
                             print("Movimiento inválido, inténtelo de nuevo.")
                     else:
                         print("Turno de la computadora")
+                        count += 1
+                        #block_move = self.find_blocking_move('x' if self.current_player == 'o' else 'o')
                         best_move = self.find_best_move()
                         if best_move:
                             row, col, movement, player = best_move
@@ -386,6 +399,10 @@ class Quixo:
                             break
             else:
                 if mode == '1':  # Modo 1v1
+                    if count == draw:
+                        print("Límite de turnos alcanzado.\nEmpate")
+                        break
+                    
                     while True:
                         entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
                         partes = entrada.split()
@@ -411,7 +428,7 @@ class Quixo:
                     print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
 
                     # Solicita al jugador la nueva fila y columna para colocar su pieza
-                    movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                    movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ").lower()
                     while movement not in ["left", "right", "up", "down"]:
                         movement = input("Ingrese un movimiento valido: ")
                     if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
@@ -424,7 +441,11 @@ class Quixo:
                     else:
                         print("Movimiento inválido, inténtelo de nuevo.")
                 else:
-                    if self.side == 'O':
+                    if self.side == 'o':
+                        if count == draw:
+                            print("Límite de turnos alcanzado.\nEmpate")
+                            break
+                        
                         while True:
                             entrada = input("Ingrese la fila y columna para colocar una pieza (0-4): ")
                             partes = entrada.split()
@@ -450,7 +471,7 @@ class Quixo:
                         print(f"Fila seleccionada: {row}, Columna seleccionada: {col}")
 
                         # Solicita al jugador la nueva fila y columna para colocar su pieza
-                        movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ")
+                        movement = input("Ingrese el movimiento a realizar ('left', 'right', 'up' o 'down'): ").lower()
                         while movement not in ["left", "right", "up", "down"]:
                             movement = input("Ingrese un movimiento valido: ")
                         if self.make_move(row, col, movement, self.current_player):  # Intenta realizar el movimiento
@@ -464,6 +485,7 @@ class Quixo:
                             print("Movimiento inválido, inténtelo de nuevo.")
                     else:
                         print("Turno de la computadora")
+                        count += 1
                         best_move = self.find_best_move()
                         if best_move:
                             row, col, movement, player = best_move
@@ -486,7 +508,7 @@ if __name__ == "__main__":
     game.play()
 
 
-#Permiti que se pueda jugar tanto con maximizador como minimizador, cambiando los false de is maximizing predeterminados
-#Corregi un error en minimax, que hacia que no se actualizara al maximizador o minimizador
-#Cambie la funcion makemove para que tambien tome jugador como parametro, y asi poder usar mejor el escoger fichas y cambio de jugador en minimax
-#Problema con undomove corregido, jugar contra la ia ya funciona
+#Implemete un menú básico para mejorar la interacción con el usuario
+#Implemente un contador a 100 en los turnos para determinar empates
+#Modifique la entrada de opciones para que admita mayusculas y minusculas sin distinción para evitar errores
+#Modifique la forma en que encuentra la mejor jugada para tratar de bloquear un 5 en raya del oponente, bloquea de forma simple pero no muy efectiva.
