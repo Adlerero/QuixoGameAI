@@ -1,10 +1,9 @@
 import math
 import os
-import sys
 
 #Adler Antonio Calvillo Arellano
 #Jared López García
-
+        
 class Quixo:
     def __init__(self):
          # Inicializa un tablero de 5x5 lleno de espacios vacíos y establece el jugador actual en 'X'
@@ -502,13 +501,27 @@ class Quixo:
                             break
 
 
+                         
+class QuixoBot:
+    def __init__(self, symbol):
+        self.name = "Invincibot"
+        
+        
+    def play_turn(self, board):
+        pass
+    
+    def reset(self, symbol):
+        pass
+    
+
+
 # Inicia el juego
 if __name__ == "__main__":
     game = Quixo() 
     game.play()
+    #game = QuixoBot("x")
+    #game.play_turn()
 
 
-#Implemete un menú básico para mejorar la interacción con el usuario
-#Implemente un contador a 100 en los turnos para determinar empates
-#Modifique la entrada de opciones para que admita mayusculas y minusculas sin distinción para evitar errores
-#Modifique la forma en que encuentra la mejor jugada para tratar de bloquear un 5 en raya del oponente, bloquea de forma simple pero no muy efectiva.
+#solo esqueleto del bot del profe
+#nombre que impone
