@@ -501,17 +501,96 @@ class Quixo:
                             break
 
 
-                         
+                          
+
+
 class QuixoBot:
+    # symbol sera un numero representando el simbolo con el que me
+    # toca jugar. Puede tener el valor 1 o -1;
     def __init__(self, symbol):
+        # define a name for your bot to appear during the log printing.
         self.name = "Invincibot"
+        self.quixo_instance = Quixo()
+        self.symbol = symbol
         
-        
+
+    # board es el estado actual del tablero. Sera una matriz de 5x5 que contiene
+    # los siguientes numeros enteros.
+    #  0 - blank cubit
+    #  1 - X cubit
+    # -1 - O cubit
     def play_turn(self, board):
-        pass
-    
+        # Esta funcion debe tomar el tablero actual, simular el movimiento deseado
+        # y regresarlo al evaluador.
+        # return new_board
+        simulated_board = [row[:] for row in board]
+        best_move = self.find_best_move(simulated_board)
+        if best_move:
+            row, col, movement, player = best_move
+            self.quixo_instance.make_move(row, col, movement, player)
+            return self.quixo_instance.board
+        
+        return board
+
+    def find_best_move(self, board):
+        best_move = ()
+        best_value = -math.inf
+        alpha = -math.inf
+        beta = math.inf
+
+        is_maximizing = self.symbol == 1
+
+        for row, col, movement in self.quixo_instance.get_possible_moves(board):
+            board_state = board[row][col]
+            board[row][col] = self.symbol
+            value = self.minimax_alpha_beta(2, is_maximizing, alpha, beta, board)
+            board[row][col] = board_state
+
+            if value > best_value:
+                best_value = value
+                best_move = (row, col, movement, self.symbol)
+
+        return best_move
+
+    def minimax_alpha_beta(self, depth, is_maximizing, alpha, beta, board):
+        if depth == 0 or self.quixo_instance.check_winner(board) is not None:
+            return self.quixo_instance.evaluate_board(self.symbol, board)
+
+        if is_maximizing:
+            best_value = -math.inf
+            for row, col, movement in self.quixo_instance.get_possible_moves(board):
+                board_state = board[row][col]
+                board[row][col] = self.symbol
+                value = self.minimax_alpha_beta(depth - 1, False, alpha, beta, board)
+                board[row][col] = board_state
+                best_value = max(value, best_value)
+                alpha = max(alpha, best_value)
+                if beta <= alpha:
+                    break
+            return best_value
+        else:
+            best_value = math.inf
+            for row, col, movement in self.quixo_instance.get_possible_moves(board):
+                board_state = board[row][col]
+                opponent = -1 if self.symbol == 1 else 1
+                board[row][col] = opponent
+                value = self.minimax_alpha_beta(depth - 1, True, alpha, beta, board)
+                board[row][col] = board_state
+                best_value = min(value, best_value)
+                beta = min(beta, best_value)
+                if beta <= alpha:
+                    break
+            return best_value
+
+
+
+
+    # Esta funcion sera llamada antes de empezar una nueva partida,
+    # por lo que su proposito es resetear cualquier estado que sea necesario
+    # para empezar desde 0.
+    # Tambien recibe el nuevo simbolo con el que empezara la partida.
     def reset(self, symbol):
-        pass
+        self.__init__(symbol)
     
 
 
@@ -525,3 +604,4 @@ if __name__ == "__main__":
 
 #solo esqueleto del bot del profe
 #nombre que impone
+#Adaptación de metodos para el bot, probablemene no sea eficiente aún
