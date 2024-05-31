@@ -100,49 +100,75 @@ class QuixoBot2:
                     return 1 #El jugador O ha ganado
         return None #No hay ganador aún
     
-    def evaluate_board(self, player):
-        def count_series(player, length):
+    def evaluate_board(self, symbol):
+        def evaluate_line(line, symbol, opponent):
+            if symbol * 5 in line:  # Línea completa de 5 piezas
+                return 100000
+            elif opponent * 5 in line:  # Línea completa del oponente
+                return -100000
+            else:
+                player_score = len([cell for cell in line if cell == symbol])
+                opponent_score = len([cell for cell in line if cell == opponent])
+                return 5 * player_score - 3 * opponent_score  # Ponderación de piezas
+
+        def center_control(board, symbol):
+            center_value = 10  # Valor ajustable para la importancia del centro
+            center_positions = [(1, 1), (1, 3), (3, 1), (3, 3)]  # Posiciones que rodean el centro real
+            score = 0
+            # Verificar si el jugador controla el centro real
+            if board[2][2] == symbol:
+                score += center_value * 3  # Mayor puntuación para el centro exacto
+            # Verificar las posiciones alrededor del centro
+            for pos in center_positions:
+                if board[pos[0]][pos[1]] == symbol:
+                    score += center_value
+            return score
+
+        def count_patterns(symbol, length, pattern):
             count = 0
             # Evaluar filas
             for row in self.board:
-                for i in range(6 - length):
-                    if all(cell == player for cell in row[i:i + length]):
-                        count += 1
+                row_str = ''.join(map(str, row))
+                count += row_str.count(pattern)
             # Evaluar columnas
             for col in range(5):
-                for i in range(6 - length):
-                    if all(self.board[j][col] == player for j in range(i, i + length)):
-                        count += 1
+                col_str = ''.join(str(self.board[j][col]) for j in range(5))
+                count += col_str.count(pattern)
             # Evaluar diagonales principales y anti-diagonales
-            for start in range(5 - length + 1):
-                # Principal
-                if all(self.board[start + j][start + j] == player for j in range(length)):
-                    count += 1
-                # Anti-diagonal
-                if all(self.board[start + j][4 - (start + j)] == player for j in range(length)):
-                    count += 1
-
+            diag1 = ''.join(str(self.board[i][i]) for i in range(5))
+            diag2 = ''.join(str(self.board[i][4 - i]) for i in range(5))
+            count += diag1.count(pattern)
+            count += diag2.count(pattern)
             return count
 
-        # Control del centro
-        def center_control(player):
-            center = self.board[2][2]
-            return 3 if center == player else 0
-        
         # Si el jugador ya ha ganado, devuelve un puntaje alto.
-        if count_series(player, 5) > 0:
-            return float('inf') if player == 'X' else float('-inf')
+        if count_patterns(symbol, 5, str(symbol) * 5) > 0:
+            return 100000000
 
-        X_score = (100 * count_series('X', 4) +
-                10 * count_series('X', 3) + 1 * count_series('X', 2) + center_control('X'))
+        # Evalúa filas, columnas y diagonales
+        score = 0
+        for i in range(5):
+            row = self.board[i]
+            column = [self.board[j][i] for j in range(5)]
+            score += evaluate_line(row, symbol, -symbol)
+            score += evaluate_line(column, symbol, -symbol)
 
-        O_score = (100 * count_series('O', 4) +
-                10 * count_series('O', 3) + 1 * count_series('O', 2) + center_control('O'))
+        # Evalúa diagonales
+        diag1 = [self.board[i][i] for i in range(5)]
+        diag2 = [self.board[i][4 - i] for i in range(5)]
+        score += evaluate_line(diag1, symbol, -symbol)
+        score += evaluate_line(diag2, symbol, -symbol)
 
-        if player == 'X':
-            return X_score - O_score
-        else:
-            return O_score - X_score
+        # Puntos adicionales por control del centro
+        score += center_control(self.board, symbol)
+
+        # Puntos adicionales por patrones específicos
+        score += 10 * count_patterns(symbol, 3, str(symbol) * 3)  # Tres en línea
+        score += 20 * count_patterns(symbol, 4, str(symbol) * 4)  # Cuatro en línea
+        score -= 5 * count_patterns(-symbol, 3, str(-symbol) * 3)  # Penalizar tres en línea del oponente
+        score -= 10 * count_patterns(-symbol, 4, str(-symbol) * 4)  # Penalizar cuatro en línea del oponente
+
+        return score
 
     def get_possible_moves(self):
         moves = []
