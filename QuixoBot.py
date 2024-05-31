@@ -146,7 +146,7 @@ class QuixoBot:
         
         # Si el jugador ya ha ganado, devuelve un puntaje alto.
         if count_series(symbol, 5) > 0:
-            return float('inf') if symbol == 1 else float('-inf')
+            return 100000000 if symbol == 1 else -100000000
 
         xscore = 0
         oscore = 0
