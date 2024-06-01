@@ -1,18 +1,16 @@
 import math
 import copy
 
-class QuixoBot:
+class QuixoBot2:
     # symbol sera un numero representando el simbolo con el que me
-    # toca jugar. Puede tener el valor 1 o -1;
+    # toca jugar. Puede tener el valor 1 o -1
     def __init__(self, symbol):
         # define a name for your bot to appear during the log printing.
-        self.name = "BlueSuitInvinciBot"
+        self.name = "Blue Suit InvinciBot"
         self.symbol = symbol
-        # inicialmente un tablero vacío, después se trabajará copiando el tablero que se pasa sobre self.board
         self.board = [[0] * 5 for _ in range(5)]
 
     def print_board(self):
-        # Imprime el estado actual del tablero
         for row in self.board:
             print(row)
 
@@ -33,7 +31,7 @@ class QuixoBot:
             print("Asegúrese de tomar una pieza que esté en los bordes.")
             return False    #Movimiento inválido
 
-        # Verificar si la pieza está en una esquina y restringir movimientos
+        # Líneas agregadas: Verificar si la pieza está en una esquina y restringir movimientos
         if self.is_corner(row, col):
             if (row == 0 and col == 0 and movement not in ['right', 'down']) or \
                (row == 0 and col == 4 and movement not in ['left', 'down']) or \
@@ -48,7 +46,7 @@ class QuixoBot:
                 print("Asegúrese de colocar la pieza en un lugar diferente al que la tomó.")
                 return False
 
-        # Movimiento válido
+        #Movimiento válido
         self.board[row][col] = symbol
         if movement == "right":  # Desplazamiento a la derecha
             for i in range(col, 4):
@@ -68,8 +66,8 @@ class QuixoBot:
             self.board[0][col] = symbol # Coloca la pieza en la nueva posición
         return True  # Movimiento realizado con éxito
 
-    #Comprueba si hay ganador
     def check_winner(self):
+        #Comprueba si hay ganador
         lines = []
         #Añade todas las filas al conjunto de líneas a verificar
         for row in self.board:
@@ -82,169 +80,169 @@ class QuixoBot:
         lines.append([self.board[i][4-i] for i in range(5)])
 
         # Comprueba cada línea para ver si hay un ganador
-        # En caso de formarse 5 en fila de los dos bandos en una jugada, gana el que no hizo la jugada.
-        # por ello se revisa primero al oponente.
+        # En caso de formarse 5 en fila de los dos bandos en una jugada, gana el que hizo la jugada.
+        # por ello se revisa primero al current player.
         if self.symbol == 1:
-            for line in lines:
-                if all(cell == -1 for cell in line):
-                    return -1 #Gana el jugador O
             for line in lines:
                 if all(cell == 1 for cell in line):
                     return 1 #Gana el jugador X
-        else:
             for line in lines:
-                if all(cell == 1 for cell in line):
-                    return 1 #El jugador O ha ganado
+                if all(cell == -1 for cell in line):
+                    return -1 #Gana el jugador O
+        else:
             for line in lines:
                 if all(cell == -1 for cell in line):
                     return -1#El jugador x ha ganado
+            for line in lines:
+                if all(cell == 1 for cell in line):
+                    return 1 #El jugador O ha ganado
         return None #No hay ganador aún
     
     def evaluate_board(self, symbol):
-        # Define una función auxiliar para evaluar una línea (fila, columna o diagonal)
+        opponent = -symbol  # Asume que el símbolo del oponente es la negación del símbolo del bot
+        
         def evaluate_line(line, symbol, opponent):
-            if symbol * 5 in line:  # Línea completa de 5 piezas del jugador
-                return 100000  # Puntaje muy alto por ganar
-            elif opponent * 5 in line:  # Línea completa del oponente
-                return -100000  # Puntaje muy bajo por perder
-            else:
-                # Cuenta las piezas del jugador y el oponente en la línea
-                player_score = len([cell for cell in line if cell == symbol])
-                opponent_score = len([cell for cell in line if cell == opponent])
-                # Asigna puntajes ponderados a las piezas del jugador y el oponente
-                return 5 * player_score - 3 * opponent_score
-
-        # Define una función auxiliar para evaluar el control del centro
-        def center_control(board, symbol):
-            center_value = 10  # Valor ajustable para la importancia del centro
-            center_positions = [(1, 1), (1, 3), (3, 1), (3, 3)]  # Posiciones que rodean el centro real
+            line_str = ''.join(map(str, line))
+            if '00000' in line_str:
+                return 0  # Puntaje neutral para una línea vacía
+            if str(symbol) * 5 in line_str:
+                return 100000  # Puntaje más alto para una línea ganadora
+            if str(opponent) * 5 in line_str:
+                return -100000  # Puntaje negativo alto para evitar la línea ganadora del oponente
+            
+            # Configuraciones de peso para patrones en la línea
             score = 0
-            # Verificar si el jugador controla el centro real
-            if board[2][2] == symbol:
-                score += center_value * 3  # Mayor puntuación para el centro exacto
-            # Verificar las posiciones alrededor del centro
-            for pos in center_positions:
-                if board[pos[0]][pos[1]] == symbol:
-                    score += center_value
+            patterns = {
+                str(symbol) * 4 + '0': 5000,
+                '0' + str(symbol) * 4: 5000,
+                str(symbol) * 3 + '00': 1000,
+                '00' + str(symbol) * 3: 1000,
+                str(symbol) * 2 + '000': 100,
+                '000' + str(symbol) * 2: 100,
+                str(symbol) + '0000': 10,
+                '0000' + str(symbol): 10
+            }
+            
+            for pattern, value in patterns.items():
+                if pattern in line_str:
+                    score += value
+            
+            #Evaluar los patrones del oponente para bloquearlos
+            opponent_patterns = {
+                str(opponent) * 4 + '0': -5000,
+                '0' + str(opponent) * 4: -5000,
+                str(opponent) * 3 + '00': -1000,
+                '00' + str(opponent) * 3: -1000,
+            }
+            
+            for pattern, value in opponent_patterns.items():
+                if pattern in line_str:
+                    score += value
+            
             return score
-
-        # Define una función auxiliar para contar patrones específicos en el tablero
-        def count_patterns(pattern):
+        
+        def count_patterns(symbol, length, pattern):
             count = 0
-            # Evaluar filas
+            # Evalua filas
             for row in self.board:
                 row_str = ''.join(map(str, row))
                 count += row_str.count(pattern)
-            # Evaluar columnas
+            # Evalua columnas
             for col in range(5):
                 col_str = ''.join(str(self.board[j][col]) for j in range(5))
                 count += col_str.count(pattern)
-            # Evaluar diagonales principales y anti-diagonales
+            # Evalua diagonales
             diag1 = ''.join(str(self.board[i][i]) for i in range(5))
             diag2 = ''.join(str(self.board[i][4 - i]) for i in range(5))
             count += diag1.count(pattern)
             count += diag2.count(pattern)
             return count
-
-        # Si el jugador ya ha ganado, devuelve un puntaje alto
-        if count_patterns(str(symbol) * 5) > 0:
-            return 100000000
-
-        # Inicializa el puntaje a 0
-        score = 0
-
-        # Evalúa filas, columnas y diagonales
+        
+        def center_control(board, symbol):
+            center_value = 50  #ajusta el valor segun sea necesario
+            center_positions = [(2, 2), (1, 1), (1, 3), (3, 1), (3, 3)]
+            score = 0
+            for pos in center_positions:
+                if board[pos[0]][pos[1]] == symbol:
+                    score += center_value
+            return score
+        
+        #evalua todas las linneas del tablero
+        lines = []
+        #filas y columnas
         for i in range(5):
-            row = self.board[i]
+            lines.append(self.board[i])  # Rows
             column = [self.board[j][i] for j in range(5)]
-            score += evaluate_line(row, symbol, -symbol)
-            score += evaluate_line(column, symbol, -symbol)
-
-        # Evalúa diagonales
-        diag1 = [self.board[i][i] for i in range(5)]
-        diag2 = [self.board[i][4 - i] for i in range(5)]
-        score += evaluate_line(diag1, symbol, -symbol)
-        score += evaluate_line(diag2, symbol, -symbol)
-
-        # Puntos adicionales por control del centro
+            lines.append(column)
+        
+        # diagonales
+        diagonals = [
+            [self.board[i][i] for i in range(5)],
+            [self.board[i][4-i] for i in range(5)]
+        ]
+        lines.extend(diagonals)
+        
+        for line in lines:
+            score += evaluate_line(line, symbol, opponent)
+        
+        #Añade un extra score por controlar el centro
         score += center_control(self.board, symbol)
-
-        # Puntos adicionales por patrones específicos
-        score += 10 * count_patterns(str(symbol) * 3)  # Tres en línea del jugador
-        score += 20 * count_patterns(str(symbol) * 4)  # Cuatro en línea del jugador
-        score -= 5 * count_patterns(str(-symbol) * 3)  # Penalizar tres en línea del oponente
-        score -= 10 * count_patterns(str(-symbol) * 4)  # Penalizar cuatro en línea del oponente
-
-        # Devuelve el puntaje final
+        
+        #Añadir puntajes por patrones específicos
+        score += 50 * count_patterns(symbol, 3, str(symbol) * 3)  # Three in a row
+        score += 100 * count_patterns(symbol, 4, str(symbol) * 4)  # Four in a row
+        score -= 25 * count_patterns(opponent, 3, str(opponent) * 3)  # Opponent's three in a row
+        score -= 50 * count_patterns(opponent, 4, str(opponent) * 4)  # Opponent's four in a row
+        
         return score
 
+
     def get_possible_moves(self):
-        # Inicializa una lista vacía para almacenar los movimientos posibles
         moves = []
-        # Itera sobre cada celda del tablero
         for row in range(5):
             for col in range(5):
-                # Verifica si el movimiento en la celda actual es válido
                 if self.is_valid_move(row, col):
-                    # Si la celda está en la primera fila
                     if row == 0:
-                        moves.append((row, col, 'down')) # Agrega el movimiento hacia abajo
-                        # Si la celda está en la primera o última columna
+                        moves.append((row, col, 'down'))
                         if col == 0 or col == 4:
-                            # Agrega el movimiento hacia la derecha o hacia la izquierda
                             moves.append((row, col, 'right' if col == 0 else 'left'))
-                    # Si la celda está en la última fila
                     elif row == 4:
-                        # Agrega el movimiento hacia arriba
                         moves.append((row, col, 'up'))
-                        # Si la celda está en la primera o última columna
                         if col == 0 or col == 4:
-                            # Agrega el movimiento hacia la derecha o hacia la izquierda
                             moves.append((row, col, 'right' if col == 0 else 'left'))
-                    # Si la celda está en la primera columna
                     if col == 0:
-                        # Agrega el movimiento hacia la derecha
                         moves.append((row, col, 'right'))
-                    # Si la celda está en la última columna
                     elif col == 4:
-                        # Agrega el movimiento hacia la izquierda
                         moves.append((row, col, 'left'))
-        # Devuelve la lista de movimientos posibles
         return moves
     
-    # Función que implementa el algoritmo Minimax con poda alfa-beta
+        # Función que implementa el algoritmo Minimax con poda alfa-beta
     def minimax_alpha_beta(self, depth, is_maximizing, alpha, beta):
-        # Comprobar si el juego ha terminado o la profundidad maxima se alcanzo
-        # y devolver el valor de la posición
+        # Comprobar si el juego ha terminado y devolver el valor de la posición
         if depth == 0 or self.check_winner() is not None:
             return self.evaluate_board(1)
 
-        if is_maximizing:  # Si es el turno del maximizador (jugador 1)
+        if is_maximizing:  # Si es el turno del maximizador (jugador 'O')
             best_value = -math.inf  # Inicializar el mejor puntaje como menos infinito
-            # Obtener todos los movimientos posibles
+            # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
                 board_state = self.board[row][col]
                 if self.make_move(row, col, movement, 1):
-                    # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
-                    # Se va reduciendo la profundidad
+                # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
                     value = self.minimax_alpha_beta(depth-1, False, alpha, beta)
-                    # Se deshace el movimiento con la función undo_move
                     self.undo_move(row, col, movement, board_state)
                     best_value = max(value, best_value)  # Actualizar el mejor puntaje
                     alpha = max(alpha, best_value)  # Actualizar alfa
                     if beta <= alpha:  # Poda beta
                         break  # Salir del bucle si ya no es necesario evaluar más movimientos
             return best_value  # Devolver el mejor puntaje encontrado
-        else:  # Si es el turno del minimizador (jugador '-1')
+        else:  # Si es el turno del minimizador (jugador 'X')
             best_value = math.inf  # Inicializar el mejor puntaje como infinito
-            # Obtener todos los movimientos posibles
+            # Recorrer todas las celdas del tablero
             for row, col, movement in self.get_possible_moves():
                 board_state = self.board[row][col]
                 if self.make_move(row, col, movement, -1):
-                    # Llamar recursivamente a minimax_alpha_beta para evaluar la posición después de este movimiento
-                    # Se va reduciendo la profundidad
                     value = self.minimax_alpha_beta(depth-1, True, alpha, beta)
-                    # Se deshace el movimiento con la función undo_move
                     self.undo_move(row, col, movement, board_state)
                     best_value = min(value, best_value)  # Actualizar el mejor puntaje
                     beta = min(value, best_value)  # Actualizar beta
@@ -252,19 +250,16 @@ class QuixoBot:
                         break  # Salir del bucle si ya no es necesario evaluar más movimientos
             return best_value  # Devolver el mejor puntaje encontrado
 
-    #Funcion para encontrar mejor movimiento posible
+
+
     def find_best_move(self):
-        best_move = () # El best move se actualizará con row, col, movement y el jugador
-        max_value = -math.inf # Peor caso para el maximizador
-        min_value = math.inf # Peor caso para el minimizador
-        # Se declaran alpha y beta
-        alpha = -math.inf 
+        best_move = ()
+        max_value = -math.inf
+        min_value = math.inf
+        alpha = -math.inf
         beta = math.inf
 
-        # Se sigue la misma lógica del minimax
         if self.symbol == 1:
-            # El siguiente jugador sera el minimizador, por lo que is_maximizing
-            # se declara como false
             is_maximizing = False
 
             for row, col, movement in self.get_possible_moves():
@@ -278,8 +273,6 @@ class QuixoBot:
                         best_move = (row, col, movement, 1)
 
         else:
-            # El siguiente jugador sera el maximizador, por lo que is_maximizing
-            # se declara como true
             is_maximizing = True
             for row, col, movement in self.get_possible_moves():
                 board_state = self.board[row][col]
@@ -290,38 +283,32 @@ class QuixoBot:
                     if value < min_value:
                         min_value = value
                         best_move = (row, col, movement, -1)
-        # Se retorna el mejor movimiento posible
+
         return best_move
 
-
-    # Función que deshace un movimiento realizado previamente en el tablero
     def undo_move(self, row, col, movement, board_state):
-        if movement == "right": # Si el movimiento fue hacia la derecha
-            self.board[row][4] = board_state # Restaura el valor original en la última columna de la fila
-            # Mueve todas las fichas de derecha a izquierda, desde la penúltima columna hasta la columna dada
+        if movement == "right":
+            self.board[row][4] = board_state
             for i in range(4, col, -1):
                 self.board[row][i] = self.board[row][i - 1]
-            self.board[row][col] = board_state # Restaura el valor original en la celda dada
-        # Si el movimiento fue hacia la izquierda
+            self.board[row][col] = board_state
         elif movement == "left":
-            # Restaura el valor original en la primera columna de la fila
             self.board[row][0] = board_state
-            # Mueve todas las fichas de izquierda a derecha, desde la segunda columna hasta la columna dada
             for i in range(0, col):
                 self.board[row][i] = self.board[row][i + 1]
-            self.board[row][col] = board_state # Restaura el valor original en la celda dada
-        elif movement == "down": # Si el movimiento fue hacia abajo
-            self.board[4][col] = board_state # Restaura el valor original en la última fila de la columna
-            # Mueve todas las fichas de abajo hacia arriba, desde la penúltima fila hasta la fila dada
+            self.board[row][col] = board_state
+        elif movement == "down":
+            self.board[4][col] = board_state
             for i in range(4, row, -1):
                 self.board[i][col] = self.board[i - 1][col]
-            self.board[row][col] = board_state # Restaura el valor original en la celda dada
-        elif movement == "up": # Si el movimiento fue hacia arriba
-            self.board[0][col] = board_state # Si el movimiento fue hacia arriba
-            # Mueve todas las fichas de arriba hacia abajo, desde la segunda fila hasta la fila dada
+            self.board[row][col] = board_state
+        elif movement == "up":
+            self.board[0][col] = board_state
             for i in range(0, row):
                 self.board[i][col] = self.board[i + 1][col]
-            self.board[row][col] = board_state # Restaura el valor original en la celda dada
+            self.board[row][col] = board_state
+
+
 
     # board es el estado actual del tablero. Sera una matriz de 5x5 que contiene
     # los siguientes numeros enteros.
@@ -332,19 +319,14 @@ class QuixoBot:
         # Esta funcion debe tomar el tablero actual, simular el movimiento deseado
         # y regresarlo al evaluador.
         # return new_board
-
-        # Copia el tablero pasado como parámetro a self.board
         self.board = copy.deepcopy(board)
-        #self.print_board() # Para comprobar el tablero
-        best_move = self.find_best_move() # Encuentra el mejor movimiento posible
-        #Aplica el movimiento
+        #self.print_board()
+        best_move = self.find_best_move()
         if best_move:
             row, col, movement, symbol = best_move
             self.make_move(row, col, movement, symbol)
-            # Para comprobar que movimiento hizo el bot
-            # print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
-
-            return self.board # Regresa el tablero despues del movimiento
+            #print(f"La computadora ha hecho su movimiento en la casilla ({best_move[0]}, {best_move[1]}) hacia {best_move[2]}")
+            return self.board
 
 
     # Esta funcion sera llamada antes de empezar una nueva partida,
