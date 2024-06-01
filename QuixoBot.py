@@ -100,6 +100,7 @@ class QuixoBot:
     
     def evaluate_board(self, symbol):
         opponent = -symbol  # Asume que el símbolo del oponente es la negación del símbolo del bot
+        score = 0
         
         def evaluate_line(line, symbol, opponent):
             line_str = ''.join(map(str, line))
