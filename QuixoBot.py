@@ -1,7 +1,7 @@
 import math
 import copy
 
-class QuixoBot2:
+class QuixoBot:
     # symbol sera un numero representando el simbolo con el que me
     # toca jugar. Puede tener el valor 1 o -1
     def __init__(self, symbol):
